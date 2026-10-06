@@ -14,14 +14,28 @@ type Todo struct {
 }
 
 func main() {
-	todos := []Todo{{1, "เรียน Go", false}, {2, "เขียน CLI", true}}
+	todos := []Todo{{ID: 1, Text: "เรียน Go", Done: false}, {ID: 2, Text: "เขียน CLI", Done: true}}
 
-	data, _ := json.MarshalIndent(todos, "", "  ")
-	_ = os.WriteFile("todos.json", data, 0644)
+	data, err := json.MarshalIndent(todos, "", "  ")
+	if err != nil {
+		fmt.Println("marshal err:", err)
+		return
+	}
+	if err := os.WriteFile("todos.json", data, 0644); err != nil {
+		fmt.Println("write err:", err)
+		return
+	}
 	fmt.Println("wrote todos.json")
 
-	read, _ := os.ReadFile("todos.json")
+	read, err := os.ReadFile("todos.json")
+	if err != nil {
+		fmt.Println("read err:", err)
+		return
+	}
 	var loaded []Todo
-	_ = json.Unmarshal(read, &loaded)
+	if err := json.Unmarshal(read, &loaded); err != nil {
+		fmt.Println("unmarshal err:", err)
+		return
+	}
 	fmt.Println("loaded:", loaded)
 }

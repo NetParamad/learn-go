@@ -19,16 +19,35 @@ const file = "todos.json"
 func load() []Todo {
 	data, err := os.ReadFile(file)
 	if err != nil {
+		if !os.IsNotExist(err) {
+			fmt.Println("load err:", err)
+		}
 		return nil
 	}
 	var t []Todo
-	_ = json.Unmarshal(data, &t)
+	if err := json.Unmarshal(data, &t); err != nil {
+		fmt.Println("parse err (ไฟล์เสีย เริ่มใหม่):", err)
+		return nil
+	}
 	return t
 }
 
-func save(t []Todo) {
-	data, _ := json.MarshalIndent(t, "", "  ")
-	_ = os.WriteFile(file, data, 0644)
+func save(t []Todo) error {
+	data, err := json.MarshalIndent(t, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(file, data, 0644)
+}
+
+func nextID(t []Todo) int {
+	max := 0
+	for _, v := range t {
+		if v.ID > max {
+			max = v.ID
+		}
+	}
+	return max + 1
 }
 
 func main() {
@@ -38,8 +57,11 @@ func main() {
 
 	todos := load()
 	if *add != "" {
-		todos = append(todos, Todo{ID: len(todos) + 1, Text: *add})
-		save(todos)
+		todos = append(todos, Todo{ID: nextID(todos), Text: *add})
+		if err := save(todos); err != nil {
+			fmt.Println("save err:", err)
+			return
+		}
 		fmt.Println("added:", *add)
 		return
 	}
